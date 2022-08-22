@@ -10,7 +10,13 @@ import temp as tmp
 import pyttsx3
 import random
 import winsound
-import pywhatkit as kt
+# Import required modules
+import pyautogui
+import time
+import requests
+from bs4 import BeautifulSoup
+import keyboard
+import sys
 
 
 r = sr.Recognizer()
@@ -25,10 +31,23 @@ file = open('happy.txt')
 content = file.readlines()
 list1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
+engine = pyttsx3.init()
+
+# change the speech rate
+engine.setProperty('rate', 165)
+
+# get the available voices
+voices = engine.getProperty('voices')
+
+# choose a voice based on the voice id
+engine.setProperty('voice', voices[0].id)
+# Selected Brian Voice
+
 
 def SpeakText(text):
-    if (text == "hello" or text == "hi"):
-        mytext = "Greetings sir!"
+    if (text == "p"):
+        # mytext = "Ready for command sir!"
+        kt.info("Python")
         # y = random.choice(list1)
         # x = tmp.emotion()
         # print(x)
@@ -57,54 +76,77 @@ def SpeakText(text):
     elif 'search for' in text:
         text = text.replace("search for", " ", 10)
         kt.search(text)
-        mytext = "Here is your search results"
+        mytext = "Here it is..."
 
     elif 'play' in text:
         text = text.replace("play", " ", 4)
         kt.playonyt(text)
         mytext = "Your" + text + " here sir"
 
-    elif ('open notepad' in text) or ('open writingpad' in text) or ('open note' in text):
-        os.system("Notepad")
-        mytext = "Yes sir!"
+    elif ('notes' in text) or ('open writingpad' in text) or ('open note' in text):
+        webbrowser.open_new_tab("https://notepad.pw/saddamnotestemp")
+        mytext = "Sir,"
+        # os.system("Notepad")
+        # mytext = "Yes sir!"
     elif ("open vlc" in text) or ("player" in text) or ("video player" in text) or ("vlc" in text):
         os.system("VLC Media Player")
         mytext = "VLC here"
+
+    elif 'keep my pc awake' in text:
+        pyautogui.FAILSAFE = False
+        while True:
+            time.sleep(15)
+            for i in range(0, 100):
+                pyautogui.moveTo(0, i * 5)
+            for i in range(0, 3):
+                pyautogui.press('shift')
+
     elif 'shutdown now' in text:
         return os.system("shutdown /s /t 1")
+    elif 'reboot now' in text:
+        return os.system('reboot now')
     else:
         try:
             try:
                 res = client.query(text)
                 mytext = next(res.results).text
             except:
-                print("kindly wait while i search wikipedia")
-                mytext = wikipedia.summary(text, sentences=2)
+                URL = "https://www.google.co.in/search?q=" + text
+
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.102 Safari/537.36'
+                }
+
+                page = requests.get(URL, headers=headers)
+                soup = BeautifulSoup(page.content, 'html.parser')
+                try:
+                    result = soup.find(class_='Z0LcW CfV8xf').get_text()
+                    print(result)
+                    mytext = result
+                except:
+                    try:
+                        result = soup.find(
+                            class_='hgKElc').get_text()
+                        print('def')
+                        print(result)
+                        mytext = result
+                    except:
+                        result = soup.find(
+                            class_='VwiC3b yXK7lf MUxGbd yDYNvb lyLwlc lEBKkf').get_text()
+                        print('abc')
+                        print(result)
+                        mytext = result
+
+            # print("kindly wait while i search wikipedia")
+            # mytext = wikipedia.summary(text, sentences=2)
         except:
             mytext = "Sorry! Result not found"
-
-    # engine = pyttsx3.init()
-    # engine.say(mytext)
-    # engine.runAndWait()
-
     # init function to get an engine instance for the speech synthesis
-    engine = pyttsx3.init()
-
-    # change the speech rate
-    engine.setProperty('rate', 200)
-
-    # get the available voices
-    voices = engine.getProperty('voices')
-
-    # choose a voice based on the voice id
-    engine.setProperty('voice', voices[0].id)  # Selected Brian Voice
-
     # say method on the engine that passing input text to be spoken
     engine.say(mytext)
-
-    # run and wait method, it processes the voice commands.
     engine.runAndWait()
-
+    global y
+    y = time.time()
     # language = 'en'
 
     # myobj = gTTS(text=mytext, lang=language, slow=False)
@@ -118,28 +160,69 @@ def SpeakText(text):
     # os.remove(filename)
 
 
-while (1):
-
+temp = 0
+while(1):
     try:
+        import pywhatkit as kt
+        engine.say('Connecting')
+        engine.runAndWait()
+    except:
+        if(temp == 0):
+            engine.say('You are not connected...')
+        engine.runAndWait()
+        temp = 1
+    else:
+        engine.say('Connected Successfully')
+        engine.runAndWait()
+        break
+global x
 
+
+def runfun():
+    global x
+    x = 0
+    y = time.time()
+    try:
         with sr.Microphone() as source2:
-            r.pause_threshold = 1
-            r.adjust_for_ambient_noise(source2)
+            r.pause_threshold = 0.7
+            r.energy_threshold = 6000
+            # r.adjust_for_ambient_noise(source2)
             print("Listening...")
             duration = 70  # milliseconds
             freq = 360  # Hz
+            # ###################################
+            x = time.time()
             winsound.Beep(freq, duration)
-            # audio2 = r.listen(source2)
-            audio2 = r.record(source2, duration=4)
-            print("Recognizing...")
+            # #################################
+            # audio2 = r.record(source2, duration=4)
+            audio2 = r.listen(source2)
+            print("a")
+            # print("Recognizing...")
             MyText = r.recognize_google(audio2, language='en')
-            MyText = MyText.lower()
 
+        MyText = MyText.lower()
         print("Did you say " + MyText)
         SpeakText(MyText)
-
     except sr.RequestError as e:
         print("Could not request results; {0}".format(e))
-
     except sr.UnknownValueError:
         print(". . .")
+
+
+while True:
+    try:  # used try so that if user pressed other than the given key error will not be shown
+        if keyboard.is_pressed('shift+space'):  # if key 'q' is pressed
+            runfun()
+            # break  # finishing
+    except:
+        break
+
+    # elif 'deep dive' in text:
+    #     text = text.replace("deed dive into", " ", 14)
+    #     res = requests.get('https//google.com/search?q='+''.join(sys.argv[1:]))
+    #     res.raise_for_status()
+    #     BeautifulSoup(res.text, "html.parser")
+    #     linkElements = soup.select('.r a')
+    #     linkToOpen = min(5, len(linkElements))
+    #     for i in range(linkToOpen):
+    #         webbrowser.open('https://google.com'+linkElements[i].get('href'))
